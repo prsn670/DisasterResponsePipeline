@@ -1,13 +1,12 @@
 import os
 import sys
 import warnings
-from etl import ETL
+import etl
 
 if __name__ == "__main__":
-    root = os.path.dirname(os.path.abspath('setup.py'))  # This is your Project Root - use with terminal
-    # root = os.path.dirname('../setup.py')  # This is your Project Root - Use with pycharm
+    root = os.path.dirname(os.path.abspath('setup.py'))  # This is your Project Root
 
-    etl_obj = ETL(root)
+    etl_obj = etl.ETL(root)
     if len(sys.argv) == 3:
         etl_obj.read_csv(sys.argv[1], sys.argv[2])
     else:

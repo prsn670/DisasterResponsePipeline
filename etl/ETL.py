@@ -70,5 +70,5 @@ class ETL:
         :return:
         """
         # insert dataset into sqlite DB
-        self.engine = create_engine('sqlite:///DisasterMessage.db')
+        self.engine = create_engine('sqlite:///data/DisasterMessage.db')
         self.df_merged.to_sql('DisasterMessage', self.engine, index=False, if_exists='replace')
