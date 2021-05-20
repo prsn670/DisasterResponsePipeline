@@ -55,13 +55,20 @@ class ETL:
         self.df_merged = pd.concat([self.df_merged, split_categories_df], axis=1)
 
     def clean_df(self):
+        """
+        Removes categories column from merged data frame and removes duplicates
+        :return:
+        """
         self.df_merged.drop(['categories'], axis=1, inplace=True)
 
         # remove duplicates
         self.df_merged.drop_duplicates(subset=['id'], inplace=True)
 
     def df_insert_db(self):
-        # save dataset into sqlite DB
-        # sqlalchemy.delete
+        """
+        inserts data frame into a SQLite database
+        :return:
+        """
+        # insert dataset into sqlite DB
         self.engine = create_engine('sqlite:///DisasterMessage.db')
         self.df_merged.to_sql('DisasterMessage', self.engine, index=False, if_exists='replace')
