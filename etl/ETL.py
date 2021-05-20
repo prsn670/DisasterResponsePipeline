@@ -11,7 +11,7 @@ class ETL:
         self.df_categories = None
         self.engine = None
 
-    def load(self, messages_csv="data/messages.csv", categories_csv="data/categories.csv"):
+    def read_csv(self, messages_csv="data/messages.csv", categories_csv="data/categories.csv"):
         """
         Reads csv files and puts them in a dataframe.
         :param messages_csv: file location of messages
