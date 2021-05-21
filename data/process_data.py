@@ -10,7 +10,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         etl_obj.read_csv(sys.argv[1], sys.argv[2])
     else:
-        warnings.warn("The correct number of arguments were not entered. Will read files from default location.")
+        warnings.warn("The correct number of arguments(3) were not entered. Will read files from default location.")
         etl_obj.read_csv()
 
     etl_obj.merge_df()
