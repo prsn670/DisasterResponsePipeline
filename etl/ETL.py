@@ -10,8 +10,9 @@ class ETL:
         self.df_messages = None
         self.df_categories = None
         self.engine = None
+        self.table_name = None
 
-    def read_csv(self, messages_csv="data/messages.csv", categories_csv="data/categories.csv"):
+    def read_csv(self, messages_csv="data/disaster_messages.csv", categories_csv="data/disaster_categories.csv"):
         """
         Reads csv files and puts them in a dataframe.
         :param messages_csv: file location of messages
@@ -64,11 +65,12 @@ class ETL:
         # remove duplicates
         self.df_merged.drop_duplicates(subset=['id'], inplace=True)
 
-    def df_insert_db(self):
+    def df_insert_db(self, db_location='data/DisasterResponse.db'):
         """
         inserts data frame into a SQLite database
         :return:
         """
         # insert dataset into sqlite DB
-        self.engine = create_engine('sqlite:///data/DisasterMessage.db')
-        self.df_merged.to_sql('DisasterMessage', self.engine, index=False, if_exists='replace')
+        self.engine = create_engine('sqlite:///' + db_location)
+        table_name = db_location.split('.')[0].replace('data/', '')
+        self.df_merged.to_sql(table_name, self.engine, index=False, if_exists='replace')
