@@ -1,4 +1,5 @@
 import sys
+import pandas as pd
 from TrainModel import TrainModel
 
 if __name__ == "__main__":
@@ -8,4 +9,10 @@ if __name__ == "__main__":
         data = TrainModel()
 
     X = data.create_test_data()
-    idf = data.tokenize(data.X_messages_train[0], "training")
+    # data.tokenize(data.X_messages_train[0], "training")
+    p = data.pipeline()
+
+    p[0].sort_values(by=['TF-IDF'], inplace=True, ascending=False)
+
+
+
