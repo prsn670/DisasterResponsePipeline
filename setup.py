@@ -4,4 +4,4 @@ setup(name='ETL',
       version='0.1',
       description='Extract, Transform, Load',
       packages=['etl'],
-      zip_safe=False, install_requires=['pandas', 'sqlalchemy'])
+      zip_safe=False, install_requires=['pandas', 'sqlalchemy', 'nltk'])

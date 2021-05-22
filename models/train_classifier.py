@@ -8,4 +8,4 @@ if __name__ == "__main__":
         data = TrainModel()
 
     X = data.create_test_data()
-    print(data.df.head())
+    idf = data.tokenize(data.X_messages_train[0], "training")
