@@ -33,9 +33,7 @@ def create_test_data(db_location='data/DisasterResponse.db'):
 
 
     engine = create_engine('sqlite:///' + db_location)
-    metadata = MetaData()
     table_name = db_location.split('.')[0].replace('data/', '')
-    # disaster_data = Table(table_name, metadata, autoload=True, autoload_with=engine)
     df = pd.read_sql_table(table_name, engine)
 
     global X_messages_train
@@ -72,6 +70,10 @@ def tokenize(message_data):
 
 
 def build_model():
+    """
+    builds model using pipeline, Linear SVC, and GridSearch
+    :return:
+    """
     disaster_pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -88,26 +90,46 @@ def build_model():
     return cv
 
 def print_report(test_values, prediction, labels):
+    """
+    Prints report showing precision, recall f1-score support, and accuracy for each category label.
+    :param test_values:
+    :param prediction:
+    :param labels:
+    :return:
+    """
     print(classification_report(test_values, prediction, target_names=labels))
     accuracy = (y_pred == y_categories_test).mean()
-    print(f'Accuracy: {accuracy}')
+    print(f'Accuracy: \n{accuracy}')
 
 def create_pickle_file(model, filepath='models/classifier.pkl'):
+    """
+    saves the resulting model as a pkl file
+    :param model:
+    :param filepath:
+    :return:
+    """
     pickle.dump(model, open(filepath, 'wb'))
 
 
 if __name__ == '__main__':
+    # create data that will be used for testing
     try:
         labels = create_test_data(sys.argv[1])
     except IndexError:
         warnings.warn("The path to the db was not entered. Will read file from default location.")
         labels = create_test_data()
 
+    # build and fit our model
     model = build_model()
     model.fit(X_messages_train, y_categories_train)
+
+    # predict categories on testing data
     y_pred = model.predict(X_messages_test)
 
+    # print report based on predictions
     print_report(y_categories_test.values, y_pred, labels)
+
+    # save model as pkl file
     try:
         create_pickle_file(model, sys.argv[2])
     except IndexError:

@@ -31,9 +31,6 @@ class ETL:
         self.df_merged = pd.merge(self.df_messages, self.df_categories, on=['id', 'id'])
         self.split_category()
 
-    def get_merged_df(self):
-        return self.df_merged
-
     def split_category(self):
         """
         Splits the data in the categories column and creates a new columns based on the category name.
