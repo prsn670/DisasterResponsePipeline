@@ -1,7 +1,11 @@
+import sys
+import pickle
+import warnings
+
 from sklearn.metrics import confusion_matrix
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import LinearSVC
 from sqlalchemy import create_engine, Table, MetaData
 import pandas as pd
 from nltk import word_tokenize, WordNetLemmatizer
@@ -11,19 +15,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import GridSearchCV
-import numpy as np
+from sklearn.metrics import classification_report
 
 stop_words = stopwords.words('english')
 tfidf_vectorizer = TfidfVectorizer(use_idf=True, lowercase=True, analyzer='word', stop_words=stop_words)
 X_messages_train = X_messages_test = y_categories_train = y_categories_test = None
 
 
-def create_test_data():
+def create_test_data(db_location='data/DisasterResponse.db'):
     """
     Splits data into training and testing groups.
     :return:
     """
-    db_location = 'data/DisasterResponse.db'
+
 
     engine = create_engine('sqlite:///' + db_location)
     metadata = MetaData()
@@ -40,9 +44,8 @@ def create_test_data():
     X_messages_train, X_messages_test, y_categories_train, y_categories_test = train_test_split(
         X_messages,
         y_categories.to_numpy(),
-        test_size=.30,
-        random_state=42)
-
+        test_size=.10)
+    return y_categories.columns
 
 # tokenize, lemmatize, and normalize text.
 def tokenize(message_data):
@@ -71,11 +74,6 @@ def tokenize(message_data):
 
 
 def build_model():
-    dataset = [
-        "I enjoy reading about Machine Learning and Machine Learning is my PhD subject",
-        "I would enjoy a walk in the park",
-        "I was reading in the library"
-    ]
     disaster_pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -91,19 +89,30 @@ def build_model():
     cv = GridSearchCV(disaster_pipeline, param_grid=parameters)
     return cv
 
+def print_report(test_values, prediction, labels):
+    print(classification_report(test_values, prediction, target_names=labels))
+    accuracy = (y_pred == y_categories_test).mean()
+    print_report(f'Accuracy: {accuracy}')
+
+def create_pickle_file(model, filepath='models/classifier.pkl'):
+    pickle.dump(model, open(filepath, 'w'))
+
 
 if __name__ == '__main__':
-    create_test_data()
+    try:
+        labels = create_test_data(sys.argv[1])
+    except IndexError:
+        warnings.warn("The path to the db was not entered. Will read file from default location.")
+        labels = create_test_data()
+
     model = build_model()
     model.fit(X_messages_train, y_categories_train)
     y_pred = model.predict(X_messages_test)
 
-    labels = np.unique(y_pred)
-    confusion_mat = confusion_matrix(y_categories_test, y_pred, labels=labels)
-    accuracy = (y_pred == y_categories_test).mean()
+    print_report(y_categories_test.values, y_pred, labels)
+    try:
+        create_pickle_file(model, sys.argv[2])
+    except IndexError:
+        warnings.warn("Path to pickle file not entered. Using default location")
+        create_pickle_file(model)
 
-
-    print("Labels:", labels)
-    print("Confusion Matrix:\n", confusion_mat)
-    print("Accuracy:", accuracy)
-    print("\nBest Parameters:", model.best_params_)
