@@ -4,24 +4,31 @@ import pandas as pd
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 import joblib
 from sqlalchemy import create_engine
+from collections import Counter
+from nltk.tokenize import RegexpTokenizer
 
 app = Flask(__name__)
 
 
 def tokenize(text):
-    tokens = word_tokenize(text)
+    # tokens = word_tokenize(text)
+    tokenizer = RegexpTokenizer(r'\w+')
+    # remove punctuation from sentence
+    tokens = tokenizer.tokenize(text)
     lemmatizer = WordNetLemmatizer()
-
+    stop_words = stopwords.words('english')
     clean_tokens = []
     for tok in tokens:
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+        if clean_tok not in stop_words:
+            clean_tokens.append(clean_tok)
 
     return clean_tokens
 
@@ -39,12 +46,30 @@ model = joblib.load("../models/classifier.pkl")
 @app.route('/index')
 def index():
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    category_labels = list(df.columns[4:].values)
+    category_count = []
+    for label in category_labels:
+        category_count.append(df[label].sum())
+
+    related_all_words = []
+    for index, row in enumerate(df):
+        if df.iloc[index]['related'] == 1:
+            related_all_words.extend(tokenize(df.iloc[index]['message']))
+    word_counts = Counter(related_all_words)
+    top_words = []
+    top_word_counts = []
+    for key, value in word_counts.most_common(5):
+        top_words.append(key)
+        top_word_counts.append(value)
+
+    print(top_words)
+
+
+
 
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -61,6 +86,42 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=category_labels,
+                    y=category_count
+                )
+            ],
+
+            'layout': {
+                'title': 'Counts of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=top_words,
+                    y=top_word_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Counts of Top 5 words from the \'related\' category',
+                'yaxis': {
+                    'title': "Word Count"
+                },
+                'xaxis': {
+                    'title': "Words"
                 }
             }
         }
