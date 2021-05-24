@@ -2,12 +2,12 @@ import sys
 import pickle
 import warnings
 
-from sklearn.metrics import confusion_matrix
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.svm import LinearSVC
 from sqlalchemy import create_engine, Table, MetaData
 import pandas as pd
+import nltk
 from nltk import word_tokenize, WordNetLemmatizer
 from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
@@ -17,6 +17,9 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
+nltk.download('wordnet')
+nltk.download('stopwords')
+nltk.download('punkt')
 stop_words = stopwords.words('english')
 tfidf_vectorizer = TfidfVectorizer(use_idf=True, lowercase=True, analyzer='word', stop_words=stop_words)
 X_messages_train = X_messages_test = y_categories_train = y_categories_test = None
@@ -43,8 +46,8 @@ def create_test_data(db_location='data/DisasterResponse.db'):
     y_categories = df.drop(columns=['id', 'original', 'message', 'genre'])
     X_messages_train, X_messages_test, y_categories_train, y_categories_test = train_test_split(
         X_messages,
-        y_categories.to_numpy(),
-        test_size=.10)
+        y_categories,
+        test_size=.90)
     return y_categories.columns
 
 # tokenize, lemmatize, and normalize text.
@@ -60,11 +63,6 @@ def tokenize(message_data):
     normalized_words = []
     stop_words = stopwords.words('english')
     lemmatizer = WordNetLemmatizer()
-    # tfidf_vectorizer = TfidfVectorizer(use_idf=True, lowercase=True, analyzer='word', stop_words=stop_words)
-    # if process == 'training':
-    # idf = tfidf_vectorizer.fit_transform(message_data)
-    # idf_dataframe = pd.DataFrame(idf[0].T.todense(), index=tfidf_vectorizer.get_feature_names(), columns=["TF-IDF"])
-    # # elif process == 'testing':
     for message in message_data:
         words = word_tokenize(message)
         for word in words:
@@ -92,10 +90,10 @@ def build_model():
 def print_report(test_values, prediction, labels):
     print(classification_report(test_values, prediction, target_names=labels))
     accuracy = (y_pred == y_categories_test).mean()
-    print_report(f'Accuracy: {accuracy}')
+    print(f'Accuracy: {accuracy}')
 
 def create_pickle_file(model, filepath='models/classifier.pkl'):
-    pickle.dump(model, open(filepath, 'w'))
+    pickle.dump(model, open(filepath, 'wb'))
 
 
 if __name__ == '__main__':
