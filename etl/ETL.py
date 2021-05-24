@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 import re
 from sqlalchemy import create_engine
@@ -40,17 +42,19 @@ class ETL:
         :return:
         """
         # create new category column names
-        category_col_name = re.split('-\d;?', self.df_categories['categories'][0])
+        self.category_col_names = re.split('-\d;?', self.df_categories['categories'][0])
+        self.category_col_names.remove('')
 
         # split values in category column and create new data frame
         category_series = pd.Series(self.df_merged['categories'])
         split_categories_df = category_series.str.split(pat=";", expand=True)
 
         # rename columns
-        for column, new_name in zip(split_categories_df, category_col_name):
-            split_categories_df.rename(columns={column: new_name}, inplace=True)
-        # convert values to 0 or 1
+        split_categories_df.columns = self.category_col_names
+        # remove non-number characters leaving only 0 or 1
         split_categories_df.replace(to_replace='\w+-', value="", inplace=True, regex=True)
+        # convert strings 0 and 1 to integers
+        split_categories_df = split_categories_df.astype(int)
 
         # concatenate split data frame into merged data frame and drop old category column
         self.df_merged = pd.concat([self.df_merged, split_categories_df], axis=1)
@@ -63,7 +67,18 @@ class ETL:
         self.df_merged.drop(['categories'], axis=1, inplace=True)
 
         # remove duplicates
-        self.df_merged.drop_duplicates(subset=['id'], inplace=True)
+        self.df_merged.drop_duplicates(inplace=True)
+
+        # remove row if any category is not a 0 or 1
+        for column_name in self.category_col_names:
+            try:
+                self.df_merged.drop(self.df_merged[self.df_merged[column_name] < 0].index, inplace=True)
+                self.df_merged.drop(self.df_merged[self.df_merged[column_name] > 1].index, inplace=True)
+            except KeyError:
+                continue
+
+
+
 
     def df_insert_db(self, db_location='data/DisasterResponse.db'):
         """

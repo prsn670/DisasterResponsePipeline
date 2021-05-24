@@ -20,5 +20,3 @@ if __name__ == "__main__":
     except IndexError:
         warnings.warn("The database location was not entered, using default value.")
         etl_obj.df_insert_db()
-
-
