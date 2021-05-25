@@ -45,7 +45,7 @@ def create_test_data(db_location='data/DisasterResponse.db'):
     X_messages_train, X_messages_test, y_categories_train, y_categories_test = train_test_split(
         X_messages,
         y_categories,
-        test_size=.90)
+        test_size=0.3)
     return y_categories.columns
 
 # tokenize, lemmatize, and normalize text.
